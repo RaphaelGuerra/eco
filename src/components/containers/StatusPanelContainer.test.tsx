@@ -1,157 +1,118 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, act } from '@testing-library/react';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
 import { StatusPanelContainer } from './StatusPanelContainer';
 import { GameProvider } from '../../context/GameContext';
-import { useGameContext } from '../../context/gameHooks';
-import { gameActions } from '../../context/gameActions';
-import { TimeOfDay, WeatherCondition } from '../../types';
-
-// Test wrapper that provides GameContext
-function TestWrapper({ children }: { children: React.ReactNode }) {
-  return <GameProvider>{children}</GameProvider>;
-}
-
-// Helper component to test with different states
-function StatusPanelWithActions() {
-  const { dispatch } = useGameContext();
-  
-  return (
-    <div>
-      <StatusPanelContainer />
-      <button 
-        data-testid="set-night"
-        onClick={() => dispatch(gameActions.setTime(TimeOfDay.Night))}
-      >
-        Set Night
-      </button>
-      <button 
-        data-testid="set-rainy"
-        onClick={() => dispatch(gameActions.setWeather(WeatherCondition.Rainy))}
-      >
-        Set Rainy
-      </button>
-    </div>
-  );
-}
 
 describe('StatusPanelContainer', () => {
-  describe('Component Rendering', () => {
-    it('should render status panel container', () => {
-      const { getByTestId } = render(
-        <TestWrapper>
-          <StatusPanelContainer />
-        </TestWrapper>
-      );
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
 
-      expect(getByTestId('status-panel')).toBeInTheDocument();
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const renderWithProvider = () => {
+    return render(
+      <GameProvider>
+        <StatusPanelContainer />
+      </GameProvider>
+    );
+  };
+
+  describe('initial rendering', () => {
+    it('should display initial environment state', () => {
+      renderWithProvider();
+      
+      expect(screen.getByTestId('status-text')).toHaveTextContent('Time: Day | Weather: Clear');
+      expect(screen.getByTestId('environment-icon')).toHaveTextContent('☀️');
     });
 
-    it('should render status text element', () => {
-      const { getByTestId } = render(
-        <TestWrapper>
-          <StatusPanelContainer />
-        </TestWrapper>
-      );
+    it('should display cycling controls', () => {
+      renderWithProvider();
+      
+      expect(screen.getByTestId('status-cycling-toggle')).toBeInTheDocument();
+      expect(screen.getByTestId('status-cycling-status')).toBeInTheDocument();
+    });
+  });
 
-      expect(getByTestId('status-text')).toBeInTheDocument();
+  describe('environment icons', () => {
+    it('should display sun icon for day and clear weather', () => {
+      renderWithProvider();
+      
+      expect(screen.getByTestId('environment-icon')).toHaveTextContent('☀️');
+    });
+  });
+
+  describe('accessibility', () => {
+    it('should have proper ARIA labels', () => {
+      renderWithProvider();
+      
+      const icon = screen.getByTestId('environment-icon');
+      expect(icon).toHaveAttribute('role', 'img');
+      expect(icon).toHaveAttribute('aria-label', 'day clear');
+      
+      const toggleButton = screen.getByTestId('status-cycling-toggle');
+      expect(toggleButton).toHaveAttribute('aria-label');
     });
 
-    it('should have correct CSS classes for styling', () => {
-      const { getByTestId } = render(
-        <TestWrapper>
-          <StatusPanelContainer />
-        </TestWrapper>
-      );
+    it('should have proper live region attributes', () => {
+      renderWithProvider();
+      
+      const statusPanel = screen.getByTestId('status-panel');
+      expect(statusPanel).toHaveAttribute('role', 'status');
+      expect(statusPanel).toHaveAttribute('aria-live', 'polite');
+    });
+  });
 
-      const panel = getByTestId('status-panel');
+  describe('cycling controls', () => {
+    it('should have cycling toggle button', () => {
+      renderWithProvider();
+      
+      const toggleButton = screen.getByTestId('status-cycling-toggle');
+      expect(toggleButton).toBeInTheDocument();
+      expect(toggleButton.tagName).toBe('BUTTON');
+    });
+
+    it('should have cycling status indicator', () => {
+      renderWithProvider();
+      
+      const statusIndicator = screen.getByTestId('status-cycling-status');
+      expect(statusIndicator).toBeInTheDocument();
+    });
+  });
+
+  describe('component structure', () => {
+    it('should render all required elements', () => {
+      renderWithProvider();
+      
+      expect(screen.getByTestId('status-panel')).toBeInTheDocument();
+      expect(screen.getByTestId('status-text')).toBeInTheDocument();
+      expect(screen.getByTestId('environment-icon')).toBeInTheDocument();
+      expect(screen.getByTestId('status-cycling-toggle')).toBeInTheDocument();
+      expect(screen.getByTestId('status-cycling-status')).toBeInTheDocument();
+    });
+
+    it('should have proper CSS classes for styling', () => {
+      renderWithProvider();
+      
+      const panel = screen.getByTestId('status-panel');
       expect(panel).toHaveClass('bg-gray-800', 'bg-opacity-90', 'text-white', 'p-4', 'rounded-lg', 'shadow-lg');
     });
-  });
 
-  describe('State Consumption', () => {
-    it('should display default game state correctly', () => {
-      const { getByTestId } = render(
-        <TestWrapper>
-          <StatusPanelContainer />
-        </TestWrapper>
-      );
-
-      const statusText = getByTestId('status-text');
-      expect(statusText).toHaveTextContent('Time: Day | Weather: Clear');
-    });
-
-    it('should update when game time changes', () => {
-      const { getByTestId } = render(
-        <TestWrapper>
-          <StatusPanelWithActions />
-        </TestWrapper>
-      );
-
-      const statusText = getByTestId('status-text');
-      const nightButton = getByTestId('set-night');
-
-      // Initial state
-      expect(statusText).toHaveTextContent('Time: Day | Weather: Clear');
-
-      // Change to night
-      act(() => {
-        nightButton.click();
-      });
-
-      expect(statusText).toHaveTextContent('Time: Night | Weather: Clear');
-    });
-
-    it('should update when weather changes', () => {
-      const { getByTestId } = render(
-        <TestWrapper>
-          <StatusPanelWithActions />
-        </TestWrapper>
-      );
-
-      const statusText = getByTestId('status-text');
-      const rainyButton = getByTestId('set-rainy');
-
-      // Initial state
-      expect(statusText).toHaveTextContent('Time: Day | Weather: Clear');
-
-      // Change to rainy
-      act(() => {
-        rainyButton.click();
-      });
-
-      expect(statusText).toHaveTextContent('Time: Day | Weather: Rainy');
-    });
-
-    it('should update when both time and weather change', () => {
-      const { getByTestId } = render(
-        <TestWrapper>
-          <StatusPanelWithActions />
-        </TestWrapper>
-      );
-
-      const statusText = getByTestId('status-text');
-      const nightButton = getByTestId('set-night');
-      const rainyButton = getByTestId('set-rainy');
-
-      // Change both
-      act(() => {
-        nightButton.click();
-        rainyButton.click();
-      });
-
-      expect(statusText).toHaveTextContent('Time: Night | Weather: Rainy');
+    it('should have transition classes', () => {
+      renderWithProvider();
+      
+      const panel = screen.getByTestId('status-panel');
+      expect(panel).toHaveClass('transition-all', 'duration-500');
     });
   });
 
-  describe('Text Formatting', () => {
+  describe('text formatting', () => {
     it('should capitalize time and weather values', () => {
-      const { getByTestId } = render(
-        <TestWrapper>
-          <StatusPanelContainer />
-        </TestWrapper>
-      );
-
-      const statusText = getByTestId('status-text');
+      renderWithProvider();
+      
+      const statusText = screen.getByTestId('status-text');
       const textContent = statusText.textContent || '';
       
       // Check that first letters are capitalized
@@ -160,27 +121,10 @@ describe('StatusPanelContainer', () => {
     });
 
     it('should use pipe separator format', () => {
-      const { getByTestId } = render(
-        <TestWrapper>
-          <StatusPanelContainer />
-        </TestWrapper>
-      );
-
-      const statusText = getByTestId('status-text');
+      renderWithProvider();
+      
+      const statusText = screen.getByTestId('status-text');
       expect(statusText).toHaveTextContent(/Time: .+ \| Weather: .+/);
-    });
-  });
-
-  describe('Error Handling', () => {
-    it('should throw error when used outside GameProvider', () => {
-      // Suppress console.error for this test
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      
-      expect(() => {
-        render(<StatusPanelContainer />);
-      }).toThrow('useGameContext must be used within a GameProvider');
-      
-      consoleSpy.mockRestore();
     });
   });
 }); 

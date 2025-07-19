@@ -29,4 +29,10 @@ export interface GameState {
   lastEncounterTime: number;
   activeFieldResearch: ActiveFieldResearch | null;
   researchFocus: ResearchFocus;
+  environmentCycling: {
+    isActive: boolean;
+    lastUpdate: number;
+    timeInterval: number; // 30000ms = 30 seconds
+    weatherInterval: number; // 30000ms = 30 seconds
+  };
 } 

@@ -61,7 +61,13 @@ describe('GameState interface', () => {
       weather: WeatherCondition.Clear,
       lastEncounterTime: Date.now(),
       activeFieldResearch: null,
-      researchFocus: ResearchFocus.Plants
+      researchFocus: ResearchFocus.Plants,
+      environmentCycling: {
+        isActive: false,
+        lastUpdate: Date.now(),
+        timeInterval: 30000,
+        weatherInterval: 30000
+      }
     };
 
     expect(gameState.gameTime).toBe(TimeOfDay.Day);
@@ -82,7 +88,13 @@ describe('GameState interface', () => {
       weather: WeatherCondition.Rainy,
       lastEncounterTime: Date.now(),
       activeFieldResearch: activeResearch,
-      researchFocus: ResearchFocus.Ecosystem
+      researchFocus: ResearchFocus.Ecosystem,
+      environmentCycling: {
+        isActive: false,
+        lastUpdate: Date.now(),
+        timeInterval: 30000,
+        weatherInterval: 30000
+      }
     };
 
     expect(gameState.activeFieldResearch).toEqual(activeResearch);
