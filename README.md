@@ -109,12 +109,13 @@ This project is licensed under the MIT License.
 
 ## 🎯 Current Status
 
-**Story 1.1: Basic UI Layout & Status Display** ✅ **COMPLETE**
+**Story 1.1: Basic UI Layout & Status Display** ✅ **COMPLETE & DEPLOYED**
 - Foundation UI layer implemented
 - Status panel with time/weather display
 - Exploration interface with background rendering
 - Comprehensive state management
 - Production-ready with full test coverage
+- **Live at**: https://raphaelguerra.github.io/eco/
 
 ---
 
